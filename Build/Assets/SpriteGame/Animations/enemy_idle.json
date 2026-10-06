@@ -1,0 +1,7 @@
+{
+  "texture_name": "textures/enemy.png",
+  "columns": 6,
+  "rows": 4,
+  "start_frame": 12,
+  "total_frames": 4
+}

@@ -1,0 +1,7 @@
+{
+  "texture_name": "textures/goblin_animation.png",
+  "columns": 12,
+  "rows": 6,
+  "start_frame": 36,
+  "total_frames": 4
+}

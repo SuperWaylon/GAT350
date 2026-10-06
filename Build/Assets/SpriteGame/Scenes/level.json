@@ -1,0 +1,72 @@
+{
+	"actors": [
+		{
+			"type": "Actor",
+			"prototype": false,
+			"name": "Tilemap",
+			"tag": "Ground",
+			"active": true,
+			"persistent": false,
+			"transform": {
+				"position": [ 0, 0 ],
+				"rotation": 0,
+				"scale": 5
+			},
+			"components": [
+				{
+					"type": "TilemapRendererComponent",
+					"tilemap_name": "tilemaps/world.json"
+				}
+			]
+		},
+		{
+			"type": "Actor",
+			"prototype": true,
+			"name": "CratePrototype",
+			"tag": "Prop",
+			"active": true,
+			"transform": {
+				"position": [ 840, 512 ],
+				"rotation": 0,
+				"scale": 1
+			},
+			"components": [
+				{
+					"type": "SpriteRendererComponent",
+					"texture": "textures/crate03.png"
+				},
+				{
+					"type": "Box2DPhysicsComponent",
+					"linear_damping": 2.0,
+					"angular_damping": 2.0,
+					"size": [ 100, 100 ],
+					"gravity_scale": 1
+				}
+			]
+		},
+		{
+			"type": "CratePrototype",
+			"prototype": false,
+			"name": "Crate",
+			"tag": "Prop",
+			"active": true,
+			"transform": {
+				"position": [ 340, 612 ],
+				"rotation": 0,
+				"scale": 1
+			}
+		},
+		{
+			"type": "CratePrototype",
+			"prototype": false,
+			"name": "Crate",
+			"tag": "Prop",
+			"active": true,
+			"transform": {
+				"position": [ 640, 412 ],
+				"rotation": 0,
+				"scale": 1
+			}
+		}
+	]
+}

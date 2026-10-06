@@ -1,0 +1,127 @@
+{
+	"actors": [
+		{
+			"type": "Actor",
+			"prototype": false,
+			"name": "Tilemap",
+			"tag": "Ground",
+			"active": true,
+			"persistent": true,
+			"transform": {
+				"position": [ 0, 0 ],
+				"rotation": 0,
+				"scale": 3
+			},
+			"components": [
+				{
+					"type": "TilemapRendererComponent",
+					"tilemap_name": "tilemaps/world.json"
+				}
+			]
+		},
+		{
+			"type": "Actor",
+			"prototype": false,
+			"name": "Bat",
+			"tag": "Enemy",
+			"active": true,
+			"persistent": true,
+			"transform": {
+				"position": [ 200, 200 ],
+				"rotation": 0,
+				"scale": 3
+			},
+			"components": [
+				{
+					"type": "SpriteAnimationRendererComponent",
+					"texture_frames": "animations/bat_idle.json",
+					"frames_per_second": 10,
+					"loop": true
+				}
+			]
+		},
+		{
+			"type": "Player",
+			"prototype": true,
+			"name": "PlayerPrototype",
+			"tag": "Player",
+			"active": true,
+			"speed": 2000.0,
+			"transform": {
+				"position": [ 640, 512 ],
+				"rotation": -90,
+				"scale": 1
+			},
+			"components": [
+				{
+					"type": "SpriteRendererComponent",
+					"texture": "textures/player.png"
+				},
+				{
+					"type": "Box2DPhysicsComponent",
+					"linear_damping": 2.0,
+					"angular_damping": 2.0,
+					"size": [ 48, 48 ],
+					"gravity_scale": 0
+				}
+			]
+		},
+		{
+			"type": "Enemy",
+			"prototype": true,
+			"name": "EnemyPrototype",
+			"tag": "Enemy",
+			"active": true,
+			"speed": 200.0,
+			"points": 50,
+			"health": 1,
+			"transform": {
+				"position": [ 640, 512 ],
+				"rotation": -90,
+				"scale": 1
+			},
+			"components": [
+				{
+					"type": "SpriteRendererComponent",
+					"texture": "textures/enemy.png"
+				},
+				{
+					"type": "Box2DPhysicsComponent",
+					"linear_damping": 2.0,
+					"angular_damping": 2.0,
+					"size": [ 48, 48 ],
+					"gravity_scale": 0
+				}
+			]
+		},
+		{
+			"type": "Bullet",
+			"prototype": true,
+			"name": "BulletPrototype",
+			"tag": "Bullet",
+			"active": true,
+			"lifespan": 1.0,
+			"speed": 2000.0,
+			"damping": 3,
+			"transform": {
+				"position": [ 640, 512 ],
+				"rotation": -90,
+				"scale": 1
+			},
+			"components": [
+				{
+					"type": "SpriteRendererComponent",
+					"texture": "textures/bullet.png"
+				},
+				{
+					"type": "Box2DPhysicsComponent",
+					"linear_damping": 2.0,
+					"angular_damping": 2.0,
+					"size": [ 48, 48 ],
+					"gravity_scale": 0,
+					"is_sensor": true
+				}
+			]
+		}
+	]
+}

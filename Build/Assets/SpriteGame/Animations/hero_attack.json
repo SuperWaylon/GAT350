@@ -1,0 +1,7 @@
+{
+  "texture_name": "textures/hero.png",
+  "columns": 8,
+  "rows": 7,
+  "start_frame": 8,
+  "total_frames": 6
+}
