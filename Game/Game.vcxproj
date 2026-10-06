@@ -160,33 +160,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="SpaceGame\Bullet.cpp" />
-    <ClCompile Include="SpaceGame\Enemy.cpp" />
-    <ClCompile Include="SpaceGame\Player.cpp" />
-    <ClCompile Include="SpaceGame\SpaceGame.cpp" />
-    <ClCompile Include="SpriteGame\CharacterBase.cpp" />
-    <ClCompile Include="SpriteGame\Damager.cpp" />
-    <ClCompile Include="SpriteGame\EnemyController.cpp" />
-    <ClCompile Include="SpriteGame\FlyingEnemyController.cpp" />
-    <ClCompile Include="SpriteGame\PlayerController.cpp" />
-    <ClCompile Include="SpriteGame\SpriteGame.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Engine\Engine.vcxproj">
       <Project>{0841fa30-dae5-4e10-88ab-0707ab14df03}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="SpaceGame\Bullet.h" />
-    <ClInclude Include="SpaceGame\Enemy.h" />
-    <ClInclude Include="SpaceGame\Player.h" />
-    <ClInclude Include="SpaceGame\SpaceGame.h" />
-    <ClInclude Include="SpriteGame\CharacterBase.h" />
-    <ClInclude Include="SpriteGame\Damager.h" />
-    <ClInclude Include="SpriteGame\EnemyController.h" />
-    <ClInclude Include="SpriteGame\FlyingEnemyController.h" />
-    <ClInclude Include="SpriteGame\PlayerController.h" />
-    <ClInclude Include="SpriteGame\SpriteGame.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Build\Assets\SpriteGame\Animations\bat_idle.json" />

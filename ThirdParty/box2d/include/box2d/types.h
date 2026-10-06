@@ -47,12 +47,21 @@ typedef float b2RestitutionCallback( float restitutionA, uint64_t userMaterialId
 /// @ingroup world
 typedef struct b2RayResult
 {
+	/// The shape hit.
 	b2ShapeId shapeId;
 	b2Pos point;
 	b2Vec2 normal;
+
+	/// The fraction of the input ray.
 	float fraction;
+
+	/// The number of BVH nodes visited. Diagnostic.
 	int nodeVisits;
+
+	/// The number of BVH leaves visited. Diagnostic.
 	int leafVisits;
+
+	/// Did the ray hit? If false, all other data is invalid.
 	bool hit;
 } b2RayResult;
 
@@ -227,6 +236,13 @@ typedef struct b2BodyDef
 
 	/// Sleep speed threshold, default is 0.05 meters per second
 	float sleepThreshold;
+
+	/// Continuous collision safety factor. The solver only uses continuous collision if there is a
+	/// risk of tunneling. If the body is moving fast enough to risk tunneling then it is considered a "fast body".
+	/// This improves performance and prevents movement hitches. If a body moving N meter risks tunneling, then the
+	/// body will be considered fast if it moves more than a safetyFactor times N meters over one full time step.
+	/// Non-dimensional. Recommended range [0.01, 0.5]. Default is 0.5 for high performance with low tunneling risk.
+	float safetyFactor;
 
 	/// Optional body name for debugging. Up to B2_NAME_LENGTH characters
 	const char* name;
@@ -443,7 +459,7 @@ typedef struct b2ShapeDef
 	bool invokeContactCreation;
 
 	/// Should the body update the mass properties when this shape is created. Default is true.
-	/// Warning: if this is true, you MUST call b2Body_ApplyMassFromShapes before simulating the world.
+	/// Warning: if this is false, you MUST call b2Body_ApplyMassFromShapes or b2Body_SetMassData before simulating the world.
 	bool updateBodyMass;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
@@ -569,6 +585,8 @@ typedef enum b2JointType
 	b2_distanceJoint,
 	b2_filterJoint,
 	b2_motorJoint,
+	b2_moverJoint,
+	b2_pogoJoint,
 	b2_prismaticJoint,
 	b2_revoluteJoint,
 	b2_weldJoint,
@@ -670,6 +688,22 @@ typedef struct b2DistanceJointDef
 /// @ingroup distance_joint
 B2_API b2DistanceJointDef b2DefaultDistanceJointDef( void );
 
+/// A filter joint is used to disable collision between two specific bodies.
+///
+/// @ingroup filter_joint
+typedef struct b2FilterJointDef
+{
+	/// Base joint definition
+	b2JointDef base;
+
+	/// Used internally to detect a valid definition. DO NOT SET.
+	int internalValue;
+} b2FilterJointDef;
+
+/// Use this to initialize your joint definition
+/// @ingroup filter_joint
+B2_API b2FilterJointDef b2DefaultFilterJointDef( void );
+
 /// A motor joint is used to control the relative velocity and or transform between two bodies.
 /// With a velocity of zero this acts like top-down friction.
 /// @ingroup motor_joint
@@ -716,21 +750,68 @@ typedef struct b2MotorJointDef
 /// @ingroup motor_joint
 B2_API b2MotorJointDef b2DefaultMotorJointDef( void );
 
-/// A filter joint is used to disable collision between two specific bodies.
-///
-/// @ingroup filter_joint
-typedef struct b2FilterJointDef
+/// A mover joint is used to move a dynamic character mover through velocity commands.
+/// The x and y directions are handled separately. Does not affect rotation.
+/// @ingroup mover_joint
+typedef struct b2MoverJointDef
 {
 	/// Base joint definition
 	b2JointDef base;
 
+	/// The desired linear velocity
+	b2Vec2 linearVelocity;
+
+	/// The maximum motor force in newtons.
+	b2Vec2 maxVelocityForce;
+
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
-} b2FilterJointDef;
+} b2MoverJointDef;
 
 /// Use this to initialize your joint definition
-/// @ingroup filter_joint
-B2_API b2FilterJointDef b2DefaultFilterJointDef( void );
+/// @ingroup mover_joint
+B2_API b2MoverJointDef b2DefaultMoverJointDef( void );
+
+/// Pogo joint definition
+/// @ingroup pogo_joint
+typedef struct b2PogoJointDef
+{
+	/// Base joint definition
+	b2JointDef base;
+
+	/// Normal vector at the contact
+	b2Vec2 normal;
+
+	/// The spring stiffness Hertz, cycles per second
+	float hertz;
+
+	/// The spring damping ratio, non-dimensional
+	float dampingRatio;
+
+	/// Spring length.
+	float restLength;
+
+	/// Maximum tension force. Controls how sticky the mover is to ground.
+	float maxTensionForce;
+
+	/// Maximum compression force. How hard the pogo pushes the mover up from the ground.
+	float maxCompressionForce;
+
+	/// The initial pogo internal impulse. The pogo is typically recreated every frame. This
+	/// gives a way to move the internal state forward for smoother spring behavior.
+	float impulse;
+
+	/// The initial pogo internal velocity. The pogo is typically recreated every frame. This
+	/// gives a way to move the internal state forward for smoother spring behavior.
+	float velocity;
+
+	/// Used internally to detect a valid definition. DO NOT SET.
+	int internalValue;
+} b2PogoJointDef;
+
+/// Use this to initialize your joint definition
+/// @ingroup pogo_joint
+B2_API b2PogoJointDef b2DefaultPogoJointDef( void );
 
 /// Prismatic joint definition
 /// Body B may slide along the x-axis in local frame A. Body B cannot rotate relative to body A.
@@ -1091,9 +1172,12 @@ typedef struct b2ContactEvents
 /// @note If sleeping is disabled all dynamic and kinematic bodies will trigger move events.
 typedef struct b2BodyMoveEvent
 {
+	/// The body user data.
 	void* userData;
 	b2WorldTransform transform;
 	b2BodyId bodyId;
+
+	/// Did the body fall asleep this time step?
 	bool fellAsleep;
 } b2BodyMoveEvent;
 
@@ -1137,9 +1221,17 @@ typedef struct b2JointEvents
 /// @see b2Shape_GetContactData() and b2Body_GetContactData()
 typedef struct b2ContactData
 {
+	/// The contact id. You may hold onto this to track a contact across time steps.
+	/// This id may become orphaned. Use b2Contact_IsValid before using it for other functions.
 	b2ContactId contactId;
+
+	/// The first shape id.
 	b2ShapeId shapeIdA;
+
+	/// The second shape id.
 	b2ShapeId shapeIdB;
+
+	/// The manifold copied from the contact.
 	b2Manifold manifold;
 } b2ContactData;
 
@@ -1160,19 +1252,33 @@ typedef struct b2ContactData
 typedef bool b2CustomFilterFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* context );
 
 /// Prototype for a pre-solve callback.
-/// This is called after a contact is updated. This allows you to inspect a
-/// contact before it goes to the solver. If you are careful, you can modify the
-/// contact manifold (e.g. modify the normal).
+/// This is called after a contact manifold is updated. This allows you to inspect a
+/// manifold before it goes to the solver. If you are careful, you can modify the
+/// manifold (e.g. modify the normal). You can set the manifold point count to zero disable
+/// collision.
 /// Notes:
 /// - this function must be thread-safe
 /// - this is only called if the shape has enabled pre-solve events
 /// - this is called only for awake dynamic bodies
 /// - this is not called for sensors
-/// - the supplied manifold has impulse values from the previous step
-/// Return false if you want to disable the contact this step
+/// - the supplied manifold impulses are not reliable
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-typedef bool b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context );
+typedef void b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context );
+
+/// Prototype for a pre-continuous callback.
+/// This is called when a time of impact event is computed in continuous collision. This function
+/// can be used to skip the event. Unlike the pre-solve callback, this only supplies the point and normal.
+/// At this stage of the solver the manifold may not exist or may be stale.
+/// Notes:
+/// - this function must be thread-safe
+/// - this is only called if the shape has enabled pre-solve events
+/// - this is called only for awake dynamic bodies
+/// - this is not called for sensors
+/// Return false if you want to disable the time of impact event.
+/// @warning Do not attempt to modify the world inside this callback
+/// @ingroup world
+typedef bool b2PreContinuousFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context );
 
 /// Prototype callback for overlap queries.
 /// Called for each shape found in the query.
