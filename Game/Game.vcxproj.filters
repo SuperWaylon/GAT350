@@ -5,49 +5,19 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Assets\SpaceGame">
-      <UniqueIdentifier>{f1bbde08-7a1a-4def-923a-5bb6cf56955b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Assets\SpaceGame\Animations">
-      <UniqueIdentifier>{946112b8-f041-41d5-8e0e-80a5c721edd5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Assets\SpaceGame\Scenes">
-      <UniqueIdentifier>{5c6868ff-841e-4c70-9faa-951cb891a268}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Assets\SpaceGame\Tilemaps">
-      <UniqueIdentifier>{150dbc92-ed30-4fb6-966c-77b8d72c52a1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Assets\SpriteGame">
-      <UniqueIdentifier>{9adf7dbc-6713-453b-baaf-bb88e109a81a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Assets\SpriteGame\Animations">
-      <UniqueIdentifier>{b7a103d4-abf5-424a-826c-e3ced5b05c1a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Assets\SpriteGame\Scenes">
-      <UniqueIdentifier>{c69a788e-ba76-4e6e-b241-4288de49f921}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Assets\SpriteGame\Tilemaps">
-      <UniqueIdentifier>{8ac8fb6c-145d-491a-a62a-46335b569b60}</UniqueIdentifier>
+    <Filter Include="Assets\Shaders">
+      <UniqueIdentifier>{279c61f0-d86c-477c-92c4-5a3826d114af}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Build\Assets\SpriteGame\Animations\bat_idle.json">
-      <Filter>Assets\SpriteGame\Animations</Filter>
-    </None>
-    <None Include="..\Build\Assets\SpriteGame\Tilemaps\world.json">
-      <Filter>Assets\SpriteGame\Tilemaps</Filter>
-    </None>
-    <None Include="..\Build\Assets\SpriteGame\Scenes\scene.json">
-      <Filter>Assets\SpriteGame\Scenes</Filter>
-    </None>
-    <None Include="..\Build\Assets\SpriteGame\Animations\goblin_run.json">
-      <Filter>Assets\SpriteGame\Animations</Filter>
-    </None>
-    <None Include="..\Build\Assets\SpriteGame\Scenes\level.json">
-      <Filter>Assets\SpriteGame\Scenes</Filter>
-    </None>
+    <CustomBuild Include="..\Shaders\color.frag.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Shaders\position.vert.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>
