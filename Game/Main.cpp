@@ -1,121 +1,128 @@
 #include "Engine.h"
 #include "Core/File.h"
 #include "Renderer/Shader.h"
-#include "Renderer/VertexBuffer.h"
 #include "Renderer/Pipeline.h"
+#include "Renderer/Model.h"
+#include "Renderer/Texture.h"
+#include "Math/Transform.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/transform.hpp>
 
+#include <cmath>
+#include <cstddef>
+#include <iostream>
 #include "Resources/ResourceManager.h"
 
 using namespace nu;
 
-namespace nu
+// matches the cbuffer in unlit.vert.hlsl (register b0, space1)
+struct VertexUniform
 {
-    struct Color4
-    {
-        float r, g, b, a;
-    };
-}
-
-struct Vertex
-{
-    Vector3 position;
-    Color4 color;
-};
-
-std::vector<Vertex> vertices =
-{
-    Vertex{ { -1.0f, -1.0f, 0.0f}, Color4{1, 0, 0, 1} }, // Bottom-Left
-    Vertex{ { 1.0f, -1.0f, 0.0f}, Color4{0, 1, 0, 1} }, // Bottom-Right
-    Vertex{ { 0.0f,  1.0f, 0.0f}, Color4{0, 0, 1, 1} }, // Top-Middle
+    glm::mat4 mvp;
 };
 
 int main()
 {
-    SetWorkingDirectory("Assets");
+    // the working directory must be ...\GAT350\Build (set in Game > Properties > Debugging)
+    // so "Assets" resolves to Build\Assets, where the compiled shaders, models and textures are
+    std::cout << "CWD before: " << GetWorkingDirectory() << std::endl;
+    if (!SetWorkingDirectory("Assets"))
+    {
+        std::cerr << "Could not find Assets folder. Current directory: " << GetWorkingDirectory() << std::endl;
+        return 1;
+    }
 
     // INITIALIZATION
-    Engine::Instance().Initialize();
-
-    auto vb = std::make_shared<VertexBuffer>();
-    vb->Create<Vertex>(vertices, Engine::Instance().GetRenderer().GetGPUDevice());
-
-    auto vshader = Resources().Get<nu::Shader>("shaders/position.vert", Engine::Instance().GetRenderer());
-    auto fshader = Resources().Get<nu::Shader>("shaders/color.frag", Engine::Instance().GetRenderer());
-
-    auto pipeline = std::make_shared<Pipeline>();
-    pipeline->AddVertexBuffer(sizeof(Vertex));
-    pipeline->AddVertexAttribute(
-        0,
-        SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-        offsetof(Vertex, position));
-
-    pipeline->AddVertexAttribute(
-        1,
-        SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-        offsetof(Vertex, color));
-
-    pipeline->Create(*vshader.get(), *fshader.get(),
-        Engine::Instance().GetRenderer().GetGPUDevice(),
-        Engine::Instance().GetRenderer().GetWindow());
-
-    Color4 color{ 0, 0, 0, 0 };
-
-    struct vertexUniform
+    if (!Engine::Instance().Initialize())
     {
-        glm::mat4 model;
-    };
+        std::cerr << "Engine failed to initialize" << std::endl;
+        return 1;
+    }
+    Renderer& renderer = Engine::Instance().GetRenderer();
 
-    vertexUniform uniform{ glm::mat4(1.0f) };
-
-    // MAIN LOOP
-    bool quit = false;
-    while (!quit)
+    // scope so the local pointers are released before Shutdown
     {
-        // UPDATE
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
+        // load the model, texture and shaders with the resource manager
+        // the vertex shader has 1 uniform buffer (mvp), the fragment shader has 1 uniform buffer (color) and 1 sampler (texture)
+        auto model = Resources().Get<Model>("models/spot.obj", renderer);
+        auto texture = Resources().Get<Texture>("textures/spot_diffuse.png", renderer);
+
+        auto vshader = Resources().Get<nu::Shader>("shaders/unlit.vert", renderer, 1);
+        auto fshader = Resources().Get<nu::Shader>("shaders/unlit.frag", renderer, 1, 1);
+
+        if (!model || !texture || !vshader || !fshader)
         {
-            if (event.type == SDL_EVENT_QUIT)
-            {
-                quit = true;
-            }
-            if (event.type == SDL_EVENT_KEY_DOWN && event.key.scancode == SDL_SCANCODE_ESCAPE)
-            {
-                quit = true;
-            }
+            std::cerr << "Could not load the model, texture or shaders" << std::endl;
+            return 1;
         }
 
-        // ENGINE
-        Engine::Instance().Update();
-        float dt = Engine::Instance().GetTime().GetDeltaTime();
-        float time = Engine::Instance().GetTime().GetTime();
+        // vertex layout comes straight from Model::Vertex (position, texcoord, normal, tangent)
+        // locations 0 and 1 match TEXCOORD0 and TEXCOORD1 in unlit.vert.hlsl
+        // normal and tangent are in the buffer but the shader doesn't read them
+        auto pipeline = std::make_shared<Pipeline>();
+        pipeline->AddVertexBuffer(sizeof(Model::Vertex));
+        pipeline->AddVertexAttribute(0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3, offsetof(Model::Vertex, position));
+        pipeline->AddVertexAttribute(1, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2, offsetof(Model::Vertex, texcoord));
+        if (!pipeline->Create(*vshader.get(), *fshader.get(), renderer.GetGPUDevice(), renderer.GetWindow()))
+        {
+            std::cerr << "Could not create pipeline" << std::endl;
+            return 1;
+        }
 
-        color.r = sin(time * 10.0f) * 0.5f + 0.5f;
+        // camera: sits on +z looking at the origin
+        // perspectiveRH_ZO builds a projection with depth 0..1, which is what SDL_GPU (d3d12/vulkan) expects
+        float aspect = static_cast<float>(renderer.GetWidth()) / static_cast<float>(renderer.GetHeight());
+        glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 projection = glm::perspectiveRH_ZO(glm::radians(60.0f), aspect, 0.1f, 100.0f);
 
-        auto mxt = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.0f, 0.0f));
-        auto mxs = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
-        auto mxr = glm::eulerAngleYXZ(time, time * 0.5f, 0.0f);
+        // fragment uniform (the shader declares it but doesn't use it yet)
+        glm::vec4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
 
-        
-        uniform.model = mxt * mxr * mxs;
+        VertexUniform vertexUniform{};
 
-        // RENDER
-        Engine::Instance().GetRenderer().BeginFrame();
+        // MAIN LOOP
+        bool quit = false;
+        while (!quit)
+        {
+            SDL_Event event;
+            while (SDL_PollEvent(&event))
+            {
+                if (event.type == SDL_EVENT_QUIT) quit = true;
+                if (event.type == SDL_EVENT_KEY_DOWN && event.key.scancode == SDL_SCANCODE_ESCAPE) quit = true;
+            }
 
-        
-        Engine::Instance().GetRenderer().SetVertexUniform(0, &uniform, sizeof(uniform));
+            // ENGINE
+            Engine::Instance().Update();
+            float seconds = Engine::Instance().GetTime().GetTime();
 
-        Engine::Instance().GetRenderer().SetPipeline(*pipeline);
-        Engine::Instance().GetRenderer().SetVertexBuffer(*vb);
-        Engine::Instance().GetRenderer().Draw(vb->GetVertexCount());
+            // MVP = projection * view * model (rotate around y, 45 degrees per second)
+            glm::mat4 modelMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(seconds * 45.0f), glm::vec3(0, 1, 0));
+            vertexUniform.mvp = projection * view * modelMatrix;
 
-        Engine::Instance().GetRenderer().EndFrame();
+            // RENDER
+            renderer.BeginFrame();
+
+            renderer.SetPipeline(*pipeline);
+            renderer.SetVertexUniform(0, &vertexUniform, sizeof(vertexUniform));
+            renderer.SetFragmentUniform(0, &color, sizeof(color));
+            renderer.SetFragmentTexture(0, *texture);
+
+            model->Draw(renderer);
+
+            renderer.EndFrame();
+        }
+
+        // make sure the gpu is done with the buffers, pipeline and shaders before they are released
+        SDL_WaitForGPUIdle(renderer.GetGPUDevice());
     }
+
+    // the resource manager still holds the model, texture and shaders, release them while the gpu device is still valid
+    // (requires the Clear() function added to ResourceManager.h)
+    Resources().Clear();
 
     // SHUTDOWN
     Engine::Instance().Shutdown();

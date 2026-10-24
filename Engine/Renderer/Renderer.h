@@ -20,15 +20,13 @@ namespace nu
 
 		void SetColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a = 255) const;
 		void SetColor(float r, float g, float b, float a = 1.0f) const;
-		
+
 		void DrawPoint(float x, float y) const;
 		void DrawLine(float x1, float y1, float x2, float y2) const;
 		void DrawFillRect(float x, float y, float w, float h) const;
 		void DrawRect(float x, float y, float w, float h) const;
 
 		void DrawModel(const class Model& model, const struct Transform& transform) const;
-		void DrawTexture(const class Texture& texture, float x, float y, float angle = 0.0f, float scale = 1.0f, bool flipH = false, const Vector2& origin = Vector2{ 0.5f, 0.5f }) const;
-		void DrawTexture(const class Texture& texture, const struct Rect& source, float x, float y, float angle = 0.0f, float scale = 1.0f, bool flipH = false, const Vector2& origin = Vector2{ 0.5f, 0.5f }) const;
 
 		int GetWidth() const { return m_width; }
 		int GetHeight() const { return m_height; }
@@ -41,14 +39,20 @@ namespace nu
 
 		void SetPipeline(const class Pipeline& pipeline);
 		void SetVertexBuffer(const class VertexBuffer& vertexBuffer);
+		void SetIndexBuffer(const class IndexBuffer& indexBuffer);
 		void Draw(uint32_t vertexCount);
+		void DrawIndex(const class IndexBuffer& indexBuffer);
 
 		void SetVertexUniform(uint32_t slot, const void* data, uint32_t size);
 		void SetFragmentUniform(uint32_t slot, const void* data, uint32_t size);
+		void SetFragmentTexture(uint32_t slot, const class Texture& texture);
 
-		friend class TextRenderer;
+		void CreateDepthBuffer();
+
 		friend class Texture;
 		friend class Shader;
+		friend class VertexBuffer;
+		friend class IndexBuffer;
 
 	private:
 		SDL_Window* m_window = nullptr;
@@ -57,6 +61,7 @@ namespace nu
 		SDL_GPUDevice* m_gpuDevice = nullptr;
 		SDL_GPUCommandBuffer* m_commandBuffer = nullptr;
 		SDL_GPURenderPass* m_renderPass = nullptr;
+		SDL_GPUTexture* m_depthTexture = nullptr;
 
 		bool m_cameraEnabled = true;
 		Vector2 m_camera;

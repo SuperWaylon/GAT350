@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -94,7 +94,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\glm;$(SolutionDir)ThirdParty\sdl3\include;$(SolutionDir)ThirdParty\fmod\core\inc;$(SolutionDir)ThirdParty\rapidjson\include;$(SolutionDir)ThirdParty\box2d\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\glm;$(SolutionDir)ThirdParty\assimp\include;$(SolutionDir)ThirdParty\sdl3\include;$(SolutionDir)ThirdParty\fmod\core\inc;$(SolutionDir)ThirdParty\rapidjson\include;$(SolutionDir)ThirdParty\box2d\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -120,7 +120,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\glm;$(SolutionDir)ThirdParty\sdl3\include;$(SolutionDir)ThirdParty\fmod\core\inc;$(SolutionDir)ThirdParty\rapidjson\include;$(SolutionDir)ThirdParty\box2d\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\glm;$(SolutionDir)ThirdParty\assimp\include;$(SolutionDir)ThirdParty\sdl3\include;$(SolutionDir)ThirdParty\fmod\core\inc;$(SolutionDir)ThirdParty\rapidjson\include;$(SolutionDir)ThirdParty\box2d\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -144,7 +144,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\glm;$(SolutionDir)ThirdParty\sdl3\include;$(SolutionDir)ThirdParty\fmod\core\inc;$(SolutionDir)ThirdParty\rapidjson\include;$(SolutionDir)ThirdParty\box2d\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\glm;$(SolutionDir)ThirdParty\assimp\include;$(SolutionDir)ThirdParty\sdl3\include;$(SolutionDir)ThirdParty\fmod\core\inc;$(SolutionDir)ThirdParty\rapidjson\include;$(SolutionDir)ThirdParty\box2d\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -170,7 +170,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\glm;$(SolutionDir)ThirdParty\sdl3\include;$(SolutionDir)ThirdParty\fmod\core\inc;$(SolutionDir)ThirdParty\rapidjson\include;$(SolutionDir)ThirdParty\box2d\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\glm;$(SolutionDir)ThirdParty\assimp\include;$(SolutionDir)ThirdParty\sdl3\include;$(SolutionDir)ThirdParty\fmod\core\inc;$(SolutionDir)ThirdParty\rapidjson\include;$(SolutionDir)ThirdParty\box2d\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -191,18 +191,10 @@
     <ClInclude Include="..\..\..\HelloWorld-Code\Shader.h" />
     <ClInclude Include="..\..\..\HelloWorld-Code\VertexBuffer.h" />
     <ClInclude Include="Audio\Audio.h" />
-    <ClInclude Include="Components\Box2DPhysicsComponent.h" />
-    <ClInclude Include="Components\CircleColliderComponent.h" />
     <ClInclude Include="Components\ColliderComponent.h" />
     <ClInclude Include="Components\Component.h" />
     <ClInclude Include="Components\PhysicsComponent.h" />
     <ClInclude Include="Components\RendererComponent.h" />
-    <ClInclude Include="Components\RigidBodyPhysicsComponent.h" />
-    <ClInclude Include="Components\SpriteAnimationRendererComponent.h" />
-    <ClInclude Include="Components\SpriteAnimatorRendererComponent.h" />
-    <ClInclude Include="Components\SpriteRendererComponent.h" />
-    <ClInclude Include="Components\TextRendererComponent.h" />
-    <ClInclude Include="Components\TilemapRendererComponent.h" />
     <ClInclude Include="Core\Factory.h" />
     <ClInclude Include="Core\File.h" />
     <ClInclude Include="Core\GameTime.h" />
@@ -210,7 +202,6 @@
     <ClInclude Include="Core\Singleton.h" />
     <ClInclude Include="Core\StringUtils.h" />
     <ClInclude Include="Engine.h" />
-    <ClInclude Include="Framework\Actor.h" />
     <ClInclude Include="Framework\Game.h" />
     <ClInclude Include="Framework\Object.h" />
     <ClInclude Include="Framework\Scene.h" />
@@ -221,17 +212,13 @@
     <ClInclude Include="Math\Vector2.h" />
     <ClInclude Include="Math\Vector3.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Physics\Physics.h" />
-    <ClInclude Include="Physics\PhysicsBody.h" />
     <ClInclude Include="Renderer\Font.h" />
+    <ClInclude Include="Renderer\IndexBuffer.h" />
     <ClInclude Include="Renderer\Mesh.h" />
     <ClInclude Include="Renderer\Model.h" />
     <ClInclude Include="Renderer\ParticleSystem.h" />
     <ClInclude Include="Renderer\Renderer.h" />
-    <ClInclude Include="Renderer\TextRenderer.h" />
     <ClInclude Include="Renderer\Texture.h" />
-    <ClInclude Include="Renderer\TextureFrames.h" />
-    <ClInclude Include="Renderer\Tilemap.h" />
     <ClInclude Include="Resources\Resource.h" />
     <ClInclude Include="Resources\ResourceManager.h" />
     <ClInclude Include="Serialization\Json.h" />
@@ -241,15 +228,7 @@
     <ClCompile Include="..\..\..\HelloWorld-Code\Shader.cpp" />
     <ClCompile Include="..\..\..\HelloWorld-Code\VertexBuffer.cpp" />
     <ClCompile Include="Audio\Audio.cpp" />
-    <ClCompile Include="Components\Box2DPhysicsComponent.cpp" />
-    <ClCompile Include="Components\CircleColliderComponent.cpp" />
     <ClCompile Include="Components\PhysicsComponent.cpp" />
-    <ClCompile Include="Components\RigidBodyPhysicsComponent.cpp" />
-    <ClCompile Include="Components\SpriteAnimationRendererComponent.cpp" />
-    <ClCompile Include="Components\SpriteAnimatorRendererComponent.cpp" />
-    <ClCompile Include="Components\SpriteRendererComponent.cpp" />
-    <ClCompile Include="Components\TextRendererComponentcpp.cpp" />
-    <ClCompile Include="Components\TilemapRendererComponent.cpp" />
     <ClCompile Include="Core\File.cpp" />
     <ClCompile Include="Core\GameTime.cpp" />
     <ClCompile Include="Engine.cpp" />
@@ -263,17 +242,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Physics\Physics.cpp" />
-    <ClCompile Include="Physics\PhysicsBody.cpp" />
     <ClCompile Include="Renderer\Font.cpp" />
+    <ClCompile Include="Renderer\IndexBuffer.cpp" />
     <ClCompile Include="Renderer\Mesh.cpp" />
     <ClCompile Include="Renderer\Model.cpp" />
     <ClCompile Include="Renderer\ParticleSystem.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
-    <ClCompile Include="Renderer\TextRenderer.cpp" />
     <ClCompile Include="Renderer\Texture.cpp" />
-    <ClCompile Include="Renderer\TextureFrames.cpp" />
-    <ClCompile Include="Renderer\Tilemap.cpp" />
     <ClCompile Include="Serialization\Json.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

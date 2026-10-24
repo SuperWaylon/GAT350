@@ -20,4 +20,30 @@
       <Filter>Assets\Shaders</Filter>
     </CustomBuild>
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Shaders\unlit.position.vert.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\unlit.color.frag.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\lit.color.frag.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\lit.position.vert.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\model.vert.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\model.frag.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\unlit.vert.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\unlit.frag.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
 </Project>

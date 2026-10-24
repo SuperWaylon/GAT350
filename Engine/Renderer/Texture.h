@@ -1,27 +1,32 @@
 #pragma once
 #include "Resources/Resource.h"
-#include "Math/Vector2.h"
-#include <string>
 
-struct SDL_Texture;
+#include <glm/glm.hpp>
+#include <SDL3/SDL.h>
+#include <string>
 
 namespace nu
 {
 	class Texture : public Resource
 	{
 	public:
-		Texture() = default;
-		Texture(SDL_Texture* texture);
 		~Texture();
 
-		bool Load(const std::string& filename, class Renderer& renderer);
+		bool Load(const std::string& filename, const class Renderer& renderer);
 
-		const Vector2& GetSize() const { return m_size; }
+		uint32_t GetWidth() const { return m_width; }
+		uint32_t GetHeight() const { return m_height; }
+
+		glm::vec2 GetSize() const { return { m_width, m_height }; }
 
 		friend class Renderer;
 
 	private:
-		SDL_Texture* m_texture{ nullptr };
-		Vector2 m_size{ 0.0f, 0.0f };
+		uint32_t m_width{ 0 };
+		uint32_t m_height{ 0 };
+
+		SDL_GPUDevice* m_gpuDevice = nullptr;
+		SDL_GPUTexture* m_gpuTexture = nullptr;
+		SDL_GPUSampler* m_gpuSampler = nullptr;
 	};
 }

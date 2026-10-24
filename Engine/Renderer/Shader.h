@@ -10,7 +10,10 @@ namespace nu
 	public:
 		virtual ~Shader();
 
-		bool Load(const std::string& filename, class Renderer& renderer);
+		// uniformCount is the number of uniform buffers (cbuffers) the shader declares
+		// it defaults to 1, use 0 for shaders that have no cbuffer
+		// samplerCount is the number of textures (with samplers) the shader reads, it defaults to 0
+		bool Load(const std::string& filename, class Renderer& renderer, uint32_t uniformCount = 1, uint32_t samplerCount = 0);
 
 		friend class Pipeline;
 

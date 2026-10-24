@@ -5,7 +5,6 @@
 #include "Core/GameTime.h"
 #include "Input/Input.h"
 #include "Audio/Audio.h"
-#include "Physics/Physics.h"
 
 #include "Core/Singleton.h"
 
@@ -24,7 +23,7 @@ namespace nu
 		Audio& GetAudio() { return *m_audio; }
 		Time& GetTime() { return m_time; }
 		ParticleSystem& GetPS() { return *m_particleSystem; }
-		Physics& GetPhysics() { return *m_physics; }
+		
 
 	private:
 		friend class Singleton<Engine>;
@@ -35,7 +34,6 @@ namespace nu
 		std::unique_ptr<Renderer> m_renderer;
 		std::unique_ptr<Audio> m_audio;
 		std::unique_ptr<ParticleSystem> m_particleSystem;
-		std::unique_ptr<Physics> m_physics;
 
 		Time m_time;
 	};

@@ -1,6 +1,11 @@
 #include "pch.h"
 #include "File.h"
 
+#include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
 namespace nu
 {
 	std::string GetWorkingDirectory()
@@ -17,12 +22,17 @@ namespace nu
 
 	bool SetWorkingDirectory(const std::string& path)
 	{
+		// remember where we were so a failure can say what it tried to resolve against
+		std::string before = GetWorkingDirectory();
+
 		std::error_code ec;
 		std::filesystem::current_path(path, ec);
 		// print error if error code is true
 		if (ec)
-			std::cerr << ec.message() << std::endl;
-		
+		{
+			std::cerr << "Could not set working directory to '" << path << "' (from '" << before << "'): "
+				<< ec.message() << std::endl;
+		}
 
 		return !ec;
 	}
@@ -54,7 +64,6 @@ namespace nu
 			std::cerr << ec.message() << std::endl;
 
 		return !ec && result;
-
 	}
 
 	std::vector<std::string> GetFilesInDirectory(const std::string& path)
@@ -135,20 +144,27 @@ namespace nu
 		// open the file in binary mode (no newline conversion) with the read position at the end (ate = "at end")
 		std::ifstream file(path, std::ios::binary | std::ios::ate);
 
-		// if the file could not be opened, return an empty vector
+		// if the file could not be opened, print where we looked and return an empty vector
 		if (!file.is_open())
 		{
+			std::cerr << "Could not open file '" << path << "' (cwd: " << GetWorkingDirectory() << ")" << std::endl;
 			return {};
 		}
 
 		// the read position is at the end, so tellg() gives the file size in bytes
 		std::streamsize size = file.tellg();
 
+		// tellg() returns -1 on failure, and an empty file has nothing to read
+		if (size <= 0)
+		{
+			return {};
+		}
+
 		// move the read position back to the beginning so the read starts at the first byte
 		file.seekg(0, std::ios::beg);
 
 		// create a vector large enough to hold every byte in the file
-		std::vector<uint8_t> bytes(size);
+		std::vector<uint8_t> bytes(static_cast<size_t>(size));
 
 		// read all bytes into the vector
 		// read() takes a char*, so reinterpret_cast the uint8_t* from bytes.data()
@@ -164,7 +180,7 @@ namespace nu
 
 	bool WriteTextFile(const std::string& path, const std::string& data, bool append)
 	{
-		// create input file stream
+		// create output file stream
 		std::ios::openmode mode = append ? std::ios::app : std::ios::out;
 		std::ofstream file(path, mode);
 		// return false if file is not open

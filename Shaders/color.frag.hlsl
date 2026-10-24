@@ -5,13 +5,13 @@ struct Input
 
 struct Output
 {
-    float4 Color : SV_Target0;
+    float4 color : SV_Target0;
 };
 
 Output main(Input input)
 {
     Output output;
-    output.Color = input.color;
+    output.color = input.color;
 
     return output;
 }

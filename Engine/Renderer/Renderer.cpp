@@ -4,6 +4,7 @@
 #include "Texture.h"
 #include "Pipeline.h"
 #include "VertexBuffer.h"
+#include "IndexBuffer.h"
 
 #include "Math/Transform.h"
 #include "Math/MathUtils.h"
@@ -18,14 +19,14 @@ namespace nu
 
         SDL_Init(SDL_INIT_VIDEO);
 
-        if (!TTF_Init()) 
+        if (!TTF_Init())
         {
             std::cerr << "TTF_Init Error: " << SDL_GetError() << std::endl;
             return false;
         }
 
         m_window = SDL_CreateWindow(name, width, height, 0);
-        if (m_window == nullptr) 
+        if (m_window == nullptr)
         {
             std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
             SDL_Quit();
@@ -48,12 +49,14 @@ namespace nu
         // print out the driver being utilized (e.g., "vulkan" or "d3d12")
         std::cout << "GPU Driver Initialized: " << SDL_GetGPUDeviceDriver(m_gpuDevice) << std::endl;
 
+        CreateDepthBuffer();
+
         return true;
     }
 
     bool Renderer::BeginFrame()
     {
-        m_renderPass = nullptr;   // ADDED: reset so a skipped frame never uses a stale pass
+        m_renderPass = nullptr;   // reset so a skipped frame never uses a stale pass
 
         m_commandBuffer = SDL_AcquireGPUCommandBuffer(m_gpuDevice);
         if (!m_commandBuffer)
@@ -71,14 +74,23 @@ namespace nu
 
         if (swapchainTexture != nullptr)
         {
-            SDL_GPUColorTargetInfo color_target_info{};
-            color_target_info.texture = swapchainTexture;
-            color_target_info.clear_color = SDL_FColor{ 0.0f, 0.0f, 0.0f, 1.0f };
-            color_target_info.load_op = SDL_GPU_LOADOP_CLEAR;
-            color_target_info.store_op = SDL_GPU_STOREOP_STORE;
+            SDL_GPUColorTargetInfo colorTargetInfo{};
+            colorTargetInfo.texture = swapchainTexture;
+            colorTargetInfo.clear_color = SDL_FColor{ 0.0f, 0.0f, 0.0f, 1.0f };
+            colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+            colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
-            m_renderPass = SDL_BeginGPURenderPass(m_commandBuffer, &color_target_info, 1, nullptr);
-            // REMOVED: SDL_EndGPURenderPass(m_renderPass);
+            // the depth target handles depth sorting
+            SDL_GPUDepthStencilTargetInfo depthTargetInfo{};
+            depthTargetInfo.texture = m_depthTexture;
+            depthTargetInfo.clear_depth = 1.0f;
+            depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+            depthTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
+            depthTargetInfo.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
+            depthTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
+
+            // begin ONE render pass, with both the color and depth targets
+            m_renderPass = SDL_BeginGPURenderPass(m_commandBuffer, &colorTargetInfo, 1, &depthTargetInfo);
         }
 
         return true;
@@ -153,69 +165,7 @@ namespace nu
 
     void Renderer::DrawModel(const Model& model, const Transform& transform) const
     {
-        for (auto mesh : model.GetMeshes())
-        {
-            SetColor(mesh.GetColor().r, mesh.GetColor().g, mesh.GetColor().b, 1.0f);
-            auto& points = mesh.GetPoints();
-            for (int i = 0; i + 1 < points.size(); i++)
-            {
-                // local space
-                Vector2 v1 = points[i];
-                Vector2 v2 = points[i + 1];
-
-                // convert to world space
-                v1 *= transform.scale;
-                v2 *= transform.scale;
-
-                v1 = v1.Rotate(transform.rotation * DegToRad);
-                v2 = v2.Rotate(transform.rotation * DegToRad);
-
-                v1 += transform.position;
-                v2 += transform.position;
-
-                DrawLine(v1.x, v1.y, v2.x, v2.y);
-            }
-        }
-    }
-
-    void Renderer::DrawTexture(const Texture& texture, float x, float y, float angle, float scale, bool flipH, const Vector2& origin) const
-    {
-        Vector2 size = texture.GetSize();
-
-        float cameraX = (m_cameraEnabled) ? (m_camera.x - m_width * 0.5f) : 0.0f;
-        float cameraY = (m_cameraEnabled) ? (m_camera.y - m_height * 0.5f) : 0.0f;
-
-        SDL_FRect destRect;
-        destRect.w = size.x * scale;
-        destRect.h = size.y * scale;
-
-        destRect.x = (x - cameraX) - (destRect.w * origin.x);
-        destRect.y = (y - cameraY) - (destRect.h * origin.y);
-
-        // https://wiki.libsdl.org/SDL3/SDL_RenderTexture
-        SDL_RenderTextureRotated(m_renderer, texture.m_texture, NULL, &destRect, angle, NULL, (flipH) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
-    }
-
-    void Renderer::DrawTexture(const Texture& texture, const Rect& source, float x, float y, float angle, float scale, bool flipH, const Vector2& origin) const
-    {
-        float cameraX = (m_cameraEnabled) ? (m_camera.x - m_width * 0.5f) : 0.0f;
-        float cameraY = (m_cameraEnabled) ? (m_camera.y - m_height * 0.5f) : 0.0f;
-
-        SDL_FRect sourceRect;
-        sourceRect.x = source.x;
-        sourceRect.y = source.y;
-        sourceRect.w = source.w;
-        sourceRect.h = source.h;
-
-        SDL_FRect destRect;
-        destRect.w = source.w * scale;
-        destRect.h = source.h * scale;
-
-        destRect.x = (x - cameraX) - (destRect.w * origin.x);
-        destRect.y = (y - cameraY) - (destRect.h * origin.y);
-
-        // https://wiki.libsdl.org/SDL3/SDL_RenderTexture
-        SDL_RenderTextureRotated(m_renderer, texture.m_texture, &sourceRect, &destRect, angle, NULL, (flipH) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
+        //
     }
 
     void Renderer::SetPipeline(const Pipeline& pipeline)
@@ -223,7 +173,6 @@ namespace nu
         if (!m_renderPass) return;
         // bind the pipeline to the current render pass with SDL_BindGPUGraphicsPipeline(renderPass, gpuPipeline)
         // the pipeline sets the shaders and render settings used by the draw calls that follow
-        // use pipeline.GetGPUPipeline() to get the sdl pipeline
         SDL_BindGPUGraphicsPipeline(m_renderPass, pipeline.m_gpuPipeline);
     }
 
@@ -232,17 +181,13 @@ namespace nu
         if (!m_renderPass) return;
         // describe which buffer to bind and where to start reading from
         SDL_GPUBufferBinding binding{
-            .buffer = vertexBuffer.m_gpuBuffer, // todo: the vertex buffer's gpu buffer
+            .buffer = vertexBuffer.m_gpuBuffer, // the vertex buffer's gpu buffer
             .offset = 0   // start reading at the beginning of the buffer
         };
 
-        // bind the vertex buffer to the current render pass with SDL_BindGPUVertexBuffers()
+        // bind the vertex buffer to the current render pass
         // the draw calls that follow read their vertices from this buffer
-        // parameters:
-        //   render pass   - the current render pass (m_renderPass)
-        //   first slot    - 0, matches the buffer slot set in Pipeline::AddVertexBuffer()
-        //   bindings      - pointer to the binding above
-        //   binding count - 1, we are binding one buffer
+        // slot 0 matches the buffer slot set in Pipeline::AddVertexBuffer()
         SDL_BindGPUVertexBuffers(
             m_renderPass,
             0,
@@ -251,16 +196,29 @@ namespace nu
         );
     }
 
+    void Renderer::SetIndexBuffer(const IndexBuffer& indexBuffer)
+    {
+        if (!m_renderPass) return;
+        // describe which buffer to bind and where to start reading from
+        SDL_GPUBufferBinding binding{
+            .buffer = indexBuffer.m_gpuBuffer, // the index buffer's gpu buffer
+            .offset = 0   // start reading at the beginning of the buffer
+        };
+
+        // bind the index buffer to the current render pass
+        // the indexed draw calls that follow read their indices from this buffer
+        SDL_BindGPUIndexBuffer(
+            m_renderPass,
+            &binding,
+            SDL_GPU_INDEXELEMENTSIZE_32BIT
+        );
+    }
+
     void Renderer::Draw(uint32_t vertexCount)
     {
         if (!m_renderPass) return;
-        // draw using the currently bound pipeline and vertex buffer with SDL_DrawGPUPrimitives()
-        // parameters:
-        //   render pass    - the current render pass (m_renderPass)
-        //   vertex count   - the number of vertices to draw (vertexCount)
-        //   instance count - 1, draw one copy (more than 1 is used for instancing)
-        //   first vertex   - 0, start at the first vertex in the buffer
-        //   first instance - 0, start at the first instance
+        // draw using the currently bound pipeline and vertex buffer
+        // parameters: render pass, vertex count, instance count (1), first vertex (0), first instance (0)
         SDL_DrawGPUPrimitives(
             m_renderPass,
             vertexCount,
@@ -269,12 +227,58 @@ namespace nu
             0
         );
     }
+
+    void Renderer::DrawIndex(const IndexBuffer& indexBuffer)
+    {
+        if (!m_renderPass) return;
+
+        SDL_DrawGPUIndexedPrimitives(
+            m_renderPass,
+            indexBuffer.GetIndexCount(),
+            1,
+            0,
+            0,
+            0
+        );
+    }
+
     void Renderer::SetVertexUniform(uint32_t slot, const void* data, uint32_t size)
     {
         SDL_PushGPUVertexUniformData(m_commandBuffer, slot, data, size);
     }
+
     void Renderer::SetFragmentUniform(uint32_t slot, const void* data, uint32_t size)
     {
         SDL_PushGPUFragmentUniformData(m_commandBuffer, slot, data, size);
+    }
+
+    void Renderer::SetFragmentTexture(uint32_t slot, const Texture& texture)
+    {
+        if (!m_renderPass) return;
+
+        // bind the texture and its sampler to the fragment shader slot
+        SDL_GPUTextureSamplerBinding binding
+        {
+            .texture = texture.m_gpuTexture,
+            .sampler = texture.m_gpuSampler
+        };
+
+        SDL_BindGPUFragmentSamplers(m_renderPass, slot, &binding, 1);
+    }
+
+    void Renderer::CreateDepthBuffer()
+    {
+        SDL_GPUTextureCreateInfo depthInfo{
+            .type = SDL_GPU_TEXTURETYPE_2D,
+            .format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
+            .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+            .width = (uint32_t)m_width,
+            .height = (uint32_t)m_height,
+            .layer_count_or_depth = 1,
+            .num_levels = 1,
+            .sample_count = SDL_GPU_SAMPLECOUNT_1,
+        };
+
+        m_depthTexture = SDL_CreateGPUTexture(m_gpuDevice, &depthInfo);
     }
 }
