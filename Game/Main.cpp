@@ -12,6 +12,7 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <iostream>
@@ -19,16 +20,20 @@
 
 using namespace nu;
 
-// matches the cbuffer in unlit.vert.hlsl (register b0, space1)
 struct VertexUniform
 {
-    glm::mat4 mvp;
+    glm::mat4 model;
+    glm::mat4 viewProjection;
+    glm::vec4 cameraPosition;   
+    glm::vec4 lightPosition;    
+    glm::vec4 lightColor;       
+    glm::vec4 ambientColor;     
+    glm::vec4 material;         
 };
+static_assert(sizeof(VertexUniform) == 208, "VertexUniform must match the cbuffer in gouraud.vert.hlsl");
 
 int main()
 {
-    // the working directory must be ...\GAT350\Build (set in Game > Properties > Debugging)
-    // so "Assets" resolves to Build\Assets, where the compiled shaders, models and textures are
     std::cout << "CWD before: " << GetWorkingDirectory() << std::endl;
     if (!SetWorkingDirectory("Assets"))
     {
@@ -43,16 +48,14 @@ int main()
         return 1;
     }
     Renderer& renderer = Engine::Instance().GetRenderer();
+    Input& input = Engine::Instance().GetInput();
 
-    // scope so the local pointers are released before Shutdown
     {
-        // load the model, texture and shaders with the resource manager
-        // the vertex shader has 1 uniform buffer (mvp), the fragment shader has 1 uniform buffer (color) and 1 sampler (texture)
         auto model = Resources().Get<Model>("models/spot.obj", renderer);
         auto texture = Resources().Get<Texture>("textures/spot_diffuse.png", renderer);
 
-        auto vshader = Resources().Get<nu::Shader>("shaders/unlit.vert", renderer, 1);
-        auto fshader = Resources().Get<nu::Shader>("shaders/unlit.frag", renderer, 1, 1);
+        auto vshader = Resources().Get<nu::Shader>("shaders/gouraud.vert", renderer, 1);
+        auto fshader = Resources().Get<nu::Shader>("shaders/gouraud.frag", renderer, 0, 1);
 
         if (!model || !texture || !vshader || !fshader)
         {
@@ -60,29 +63,33 @@ int main()
             return 1;
         }
 
-        // vertex layout comes straight from Model::Vertex (position, texcoord, normal, tangent)
-        // locations 0 and 1 match TEXCOORD0 and TEXCOORD1 in unlit.vert.hlsl
-        // normal and tangent are in the buffer but the shader doesn't read them
         auto pipeline = std::make_shared<Pipeline>();
         pipeline->AddVertexBuffer(sizeof(Model::Vertex));
         pipeline->AddVertexAttribute(0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3, offsetof(Model::Vertex, position));
         pipeline->AddVertexAttribute(1, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2, offsetof(Model::Vertex, texcoord));
+        pipeline->AddVertexAttribute(2, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3, offsetof(Model::Vertex, normal));
         if (!pipeline->Create(*vshader.get(), *fshader.get(), renderer.GetGPUDevice(), renderer.GetWindow()))
         {
             std::cerr << "Could not create pipeline" << std::endl;
             return 1;
         }
 
-        // camera: sits on +z looking at the origin
-        // perspectiveRH_ZO builds a projection with depth 0..1, which is what SDL_GPU (d3d12/vulkan) expects
+        glm::vec3 cameraPosition{ 0.0f, 0.5f, 3.0f };
         float aspect = static_cast<float>(renderer.GetWidth()) / static_cast<float>(renderer.GetHeight());
-        glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 view = glm::lookAt(cameraPosition, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 projection = glm::perspectiveRH_ZO(glm::radians(60.0f), aspect, 0.1f, 100.0f);
 
-        // fragment uniform (the shader declares it but doesn't use it yet)
-        glm::vec4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+        // lighting settings
+        glm::vec3 lightColor{ 1.0f, 1.0f, 1.0f };
+        float lightIntensity = 1.0f;
+        glm::vec3 ambientColor{ 0.15f, 0.15f, 0.15f };
+        float shininess = 32.0f;
 
-        VertexUniform vertexUniform{};
+        bool animate = true;
+        float animTime = 0.0f;
+        std::cout << "Controls: Up/Down = shininess, Space = pause. Shininess: " << shininess << std::endl;
+
+        VertexUniform uniform{};
 
         // MAIN LOOP
         bool quit = false;
@@ -97,18 +104,38 @@ int main()
 
             // ENGINE
             Engine::Instance().Update();
-            float seconds = Engine::Instance().GetTime().GetTime();
 
-            // MVP = projection * view * model (rotate around y, 45 degrees per second)
-            glm::mat4 modelMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(seconds * 45.0f), glm::vec3(0, 1, 0));
-            vertexUniform.mvp = projection * view * modelMatrix;
+            if (input.GetKeyPressed(SDL_SCANCODE_UP))
+            {
+                shininess = std::min(shininess * 2.0f, 512.0f);
+                std::cout << "Shininess: " << shininess << std::endl;
+            }
+            if (input.GetKeyPressed(SDL_SCANCODE_DOWN))
+            {
+                shininess = std::max(shininess * 0.5f, 2.0f);
+                std::cout << "Shininess: " << shininess << std::endl;
+            }
+            if (input.GetKeyPressed(SDL_SCANCODE_SPACE)) animate = !animate;
+
+            if (animate) animTime += Engine::Instance().GetTime().GetDeltaTime();
+
+            glm::vec3 lightPosition{ std::cos(animTime) * 2.5f, 1.5f, std::sin(animTime) * 2.5f };
+
+            glm::mat4 modelMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(animTime * 15.0f), glm::vec3(0, 1, 0));
+
+            uniform.model = modelMatrix;
+            uniform.viewProjection = projection * view;
+            uniform.cameraPosition = glm::vec4(cameraPosition, 1.0f);
+            uniform.lightPosition = glm::vec4(lightPosition, 1.0f);
+            uniform.lightColor = glm::vec4(lightColor, lightIntensity);
+            uniform.ambientColor = glm::vec4(ambientColor, 1.0f);
+            uniform.material = glm::vec4(shininess, 0.0f, 0.0f, 0.0f);
 
             // RENDER
             renderer.BeginFrame();
 
             renderer.SetPipeline(*pipeline);
-            renderer.SetVertexUniform(0, &vertexUniform, sizeof(vertexUniform));
-            renderer.SetFragmentUniform(0, &color, sizeof(color));
+            renderer.SetVertexUniform(0, &uniform, sizeof(uniform));
             renderer.SetFragmentTexture(0, *texture);
 
             model->Draw(renderer);
@@ -116,12 +143,9 @@ int main()
             renderer.EndFrame();
         }
 
-        // make sure the gpu is done with the buffers, pipeline and shaders before they are released
         SDL_WaitForGPUIdle(renderer.GetGPUDevice());
     }
 
-    // the resource manager still holds the model, texture and shaders, release them while the gpu device is still valid
-    // (requires the Clear() function added to ResourceManager.h)
     Resources().Clear();
 
     // SHUTDOWN

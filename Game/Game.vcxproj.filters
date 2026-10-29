@@ -27,12 +27,6 @@
     <FxCompile Include="..\Shaders\unlit.color.frag.hlsl">
       <Filter>Assets\Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="..\Shaders\lit.color.frag.hlsl">
-      <Filter>Assets\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\Shaders\lit.position.vert.hlsl">
-      <Filter>Assets\Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="..\Shaders\model.vert.hlsl">
       <Filter>Assets\Shaders</Filter>
     </FxCompile>
@@ -45,5 +39,16 @@
     <FxCompile Include="..\Shaders\unlit.frag.hlsl">
       <Filter>Assets\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\Shaders\gouraud.vert.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\gouraud.frag.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Lighting.hlsli">
+      <Filter>Assets\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
