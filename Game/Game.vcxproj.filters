@@ -42,10 +42,10 @@
     <FxCompile Include="..\Shaders\gouraud.frag.hlsl">
       <Filter>Assets\Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="..\Shaders\phong.frag.hlsl">
+    <FxCompile Include="..\Shaders\phong.vert.hlsl">
       <Filter>Assets\Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="..\Shaders\phong.vert.hlsl">
+    <FxCompile Include="..\Shaders\phong.frag.hlsl">
       <Filter>Assets\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\Shaders\gouraud.vert.hlsl">

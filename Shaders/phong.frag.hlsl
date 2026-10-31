@@ -1,13 +1,11 @@
+#include "lighting.hlsli"
+
 Texture2D<float4> u_texture : register(t0, space2);
 SamplerState u_sampler : register(s0, space2);
 
 cbuffer Uniforms : register(b0, space3)
 {
-    float4 cameraPosition;   
-    float4 lightPosition;    
-    float4 lightColor;       
-    float4 ambientColor;     
-    float4 material;         
+    LightBlock lighting;
 };
 
 struct Input
@@ -28,38 +26,23 @@ Output main(Input input)
     
     float3 N = normalize(input.normal);
     
-    float3 L = normalize(lightPosition.xyz - input.worldPosition);
+    float3 V = normalize(lighting.cameraPosition - input.worldPosition);
     
-    float3 V = normalize(cameraPosition.xyz - input.worldPosition);
-    
-    float3 radiance = lightColor.rgb * lightColor.a;
-    
-    float3 ambient = ambientColor.rgb;
-
-    float NdotL = saturate(dot(N, L));
-    float3 diffuse = radiance * NdotL;
-
+    float3 diffuse = float3(0.0f, 0.0f, 0.0f);
     float3 specular = float3(0.0f, 0.0f, 0.0f);
-    if (NdotL > 0.0f)
+
+    for (int i = 0; i < lighting.lightCount && i < MAX_LIGHTS; i++)
     {
-        float shininess = material.x;
-        float specularIntensity;
+        float3 lightDiffuse;
+        float3 lightSpecular;
+        computeLight(lighting.lights[i], input.worldPosition, N, V, lighting.shininess, lightDiffuse, lightSpecular);
 
-        if (material.y > 0.5f)
-        {
-            float3 H = normalize(L + V);
-            specularIntensity = pow(saturate(dot(N, H)), shininess);
-        }
-        else
-        {
-            float3 R = reflect(-L, N);
-            specularIntensity = pow(saturate(dot(R, V)), shininess);
-        }
-
-        specular = radiance * specularIntensity;
+        diffuse += lightDiffuse;
+        specular += lightSpecular;
     }
+    
     Output output;
-    output.color = float4(albedo.rgb * (ambient + diffuse) + specular, albedo.a);
+    output.color = float4(albedo.rgb * (lighting.ambient + diffuse) + specular, albedo.a);
 
     return output;
 }
