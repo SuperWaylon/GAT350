@@ -1,12 +1,12 @@
+#include "lighting.hlsli"
+
 cbuffer Uniforms : register(b0, space1)
 {
     float4x4 model;
     float4x4 viewProjection;
-    float4 cameraPosition;   
-    float4 lightPosition;    
-    float4 lightColor;       
-    float4 ambientColor;     
-    float4 material;         
+    float3   cameraPosition;   
+    float    shininess;
+    Light    light;
 };
 
 struct Input
@@ -33,29 +33,26 @@ Output main(Input input)
     output.position = mul(viewProjection, float4(worldPosition, 1.0f));
     output.texcoord = input.texcoord;
     
-    float3 radiance = lightColor.rgb * lightColor.a;
-
+    float3 radiance = light.color * light.intensity;
+    
     float3 N = normalize(mul((float3x3)model, input.normal));
-
-    float3 L = normalize(lightPosition.xyz - worldPosition);
+    
+    float attenuation;
+    float3 L = getLightVector(light, worldPosition, attenuation);
     
     float NdotL = saturate(dot(N, L));
-
-    float3 diffuse = radiance * NdotL;
-
-    output.diffuse = ambientColor.rgb + diffuse;
-
+    float3 diffuse = radiance * NdotL * attenuation;
+    
+    output.diffuse = light.ambient + diffuse;
+    
     output.specular = float3(0.0f, 0.0f, 0.0f);
-
     if (NdotL > 0.0f)
     {
-        float3 R = reflect(-L, N);
+        float3 V = normalize(cameraPosition - worldPosition);
+        float3 H = normalize(L + V);
+        float NdotH = saturate(dot(N, H));
 
-        float3 V = normalize(cameraPosition.xyz - worldPosition);
-
-        float RdotV = saturate(dot(R, V));
-
-        output.specular = pow(RdotV, material.x) * radiance;
+        output.specular = pow(NdotH, shininess) * radiance * attenuation;
     }
 
     return output;
