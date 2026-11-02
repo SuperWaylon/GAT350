@@ -362,4 +362,16 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
+# 3d model files (.obj) - the rule above is for compiler object files
 !Build/Assets/**/*.obj
+
+# third-party libraries: un-ignore build-style folder names inside ThirdParty
+!ThirdParty/**/[Bb]in/
+!ThirdParty/**/[Ll]ib/
+!ThirdParty/**/x64/
+!ThirdParty/**/x86/
+!ThirdParty/**/[Dd]ebug/
+!ThirdParty/**/[Rr]elease/
+!ThirdParty/**/*.lib
+!ThirdParty/**/*.dll
+!ThirdParty/**/*.pdb
